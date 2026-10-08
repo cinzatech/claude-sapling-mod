@@ -1,0 +1,12 @@
+{
+  "name": "cinzatech",
+  "description": "Plugins by cinzatech for Claude Code",
+  "owner": { "name": "cinzatech", "url": "https://github.com/cinzatech" },
+  "plugins": [
+    {
+      "name": "sapling-web",
+      "source": "./",
+      "description": "Adds /isl, which opens Sapling Web (ISL) for the session's folder in the Desktop app's browser pane"
+    }
+  ]
+}

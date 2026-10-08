@@ -21,6 +21,14 @@ failure the command prints the reason and the URL, so you can open it yourself.
 Outside the Desktop app the command prints the URL. It does not open a
 terminal view.
 
+The mod answers its own permission check. Its browser pane calls go through
+the same check as the model's tool calls, and in auto mode that check refuses
+a call no model request asked for. A `tool.check` hook in the mod approves
+those calls, and only those: the four browser pane tools named in the code,
+when the call comes from this plugin, for the URL and tab of the current
+`/isl` run. Calls the model makes to the same tools are left to Claude Code's
+own decision. The mod runs nothing else, and sends nothing off the machine.
+
 ## Requirements
 
 - Claude Desktop with a bundled Claude Code of 2.1.286 or later. Check with

@@ -1,6 +1,11 @@
 {
   "name": "sapling-web",
+  "displayName": "Sapling Web",
   "version": "0.1.0",
   "description": "Adds /isl, which opens Sapling Web (ISL) for the session's folder in the Desktop app's browser pane",
-  "author": { "name": "Jacobo Bouzas" }
+  "author": { "name": "cinzatech", "url": "https://github.com/cinzatech" },
+  "homepage": "https://github.com/cinzatech/claude-sapling-mod",
+  "repository": "https://github.com/cinzatech/claude-sapling-mod",
+  "license": "MIT",
+  "keywords": ["sapling", "isl", "smartlog", "version-control"]
 }
