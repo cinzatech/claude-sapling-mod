@@ -60,41 +60,47 @@ async function islUrl($, cwd) {
   return info.url
 }
 
-// Finds the open browser tab on the ISL server's origin: `{ tabId, isActive }`,
-// or null when there is none or the tab list cannot be read.
+// Reads the browser pane's tab list: the open tab on the ISL server's origin
+// as `{ tabId, isActive }` or null, and whether the pane is hidden. The tab
+// is null as well when the list cannot be read.
 async function islTab($, url) {
   const origin = new URL(url).origin
-  let tabs
+  let tabs = []
+  let hidden = false
   try {
     const r = await $.tool.call({ tool: TABS })
-    if (failureOf(r) !== null) return null
-    const parsed = JSON.parse(resultText(r).trim().replace(/^[^{]*/, '').replace(/[^}]*$/, ''))
-    tabs = Array.isArray(parsed.tabs) ? parsed.tabs : []
+    if (failureOf(r) === null) {
+      const text = resultText(r)
+      hidden = /currently hidden/i.test(text)
+      const parsed = JSON.parse(text.trim().replace(/^[^{]*/, '').replace(/[^}]*$/, ''))
+      tabs = Array.isArray(parsed.tabs) ? parsed.tabs : []
+    }
   } catch {
-    return null
+    // An unreadable list means no tab to reuse.
   }
   const tab = tabs.find((t) => t && typeof t.tabId === 'string' && t.origin === origin)
-  return tab ? { tabId: tab.tabId, isActive: tab.isActive === true } : null
+  return { tab: tab ? { tabId: tab.tabId, isActive: tab.isActive === true } : null, hidden }
 }
 
 // Shows `url` in the Desktop app's browser pane: reloads the tab already on
-// the ISL server, or opens the pane. Resolves null, or the failure's message.
+// the ISL server, or opens the pane. Resolves `{ failure, hidden }`: the
+// failure's message or null, and whether the pane is hidden from the user.
 async function openInBrowserPane($, url) {
   pendingUrl = url
   pendingTabId = null
   try {
-    const tab = await islTab($, url)
+    const { tab, hidden } = await islTab($, url)
     if (tab !== null) {
       pendingTabId = tab.tabId
       const r = await $.tool.call({ tool: NAVIGATE, url, tabId: tab.tabId })
       const failure = failureOf(r)
-      if (failure !== null) return failure
+      if (failure !== null) return { failure, hidden }
       if (!tab.isActive) await $.tool.call({ tool: SELECT, tabId: tab.tabId })
-      return null
+      return { failure: null, hidden }
     }
-    return failureOf(await $.tool.call({ tool: OPEN, url }))
+    return { failure: failureOf(await $.tool.call({ tool: OPEN, url })), hidden }
   } catch (error) {
-    return message(error)
+    return { failure: message(error), hidden: false }
   } finally {
     pendingUrl = null
     pendingTabId = null
@@ -149,10 +155,12 @@ export function register(on) {
       return { text: 'Sapling Web is at ' + url + '. The browser pane exists only in the Desktop app.' }
     }
 
-    const failure = await openInBrowserPane($, url)
+    const { failure, hidden } = await openInBrowserPane($, url)
     if (failure !== null) return { text: 'Could not open the browser pane: ' + failure + '. Sapling Web is at ' + url }
 
-    $.ui.log('Sapling Web opened for ' + root)
+    // The pane shows ISL now. Say so only when the user cannot see it: the
+    // browser tools never show a pane the user has hidden.
+    if (hidden) $.ui.toast('Sapling Web is loaded. Open the browser pane to see it.')
     return {}
   })
 }
