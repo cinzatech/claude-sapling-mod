@@ -1,39 +1,73 @@
 # sapling-web
 
-A Claude Code mod that adds the `/isl` command. The command starts Sapling Web
-(ISL) for the session's folder, or reuses the running server, and loads it in
-the Claude Desktop app's browser pane.
+A Claude Code mod for the Claude Desktop app. It adds the `/isl` command, which
+shows Sapling Web (Interactive Smartlog) for the session's repository in the
+app's browser pane.
 
-The browser pane exists only in the Desktop app. In other apps the command
-prints the URL.
+## What `/isl` does
+
+1. Checks that the session folder is inside a Sapling repository.
+2. Runs `sl web --json --no-open` there. Sapling starts its web server, or
+   reuses the one already running, and returns the URL for that repository.
+   One server serves every repository on the machine.
+3. Lists the browser pane's tabs. If one already shows the Sapling Web server,
+   it reloads that tab with the new URL and fronts it. Otherwise it opens the
+   pane with the URL.
+
+On success the command prints nothing. If you have hidden the browser pane, a
+toast says Sapling Web is loaded, because no tool can show a pane you hid. On
+failure the command prints the reason and the URL, so you can open it yourself.
+
+Outside the Desktop app the command prints the URL. It does not open a
+terminal view.
+
+## Requirements
+
+- Claude Desktop with a bundled Claude Code of 2.1.286 or later. Check with
+  `/status` in a session.
+- Sapling (`sl`) on `PATH`.
+
+## Install
+
+The Desktop app takes no `--plugin-dir` flag. Add the folder that holds this
+repository to the plugin directories in `~/.claude/settings.json`, then start
+a new session, or run `/reload-plugins` in an open one:
+
+```json
+{
+  "env": {
+    "CLAUDE_CODE_PLUGIN_DIRS": "/path/to/claude-sapling-mod"
+  }
+}
+```
+
+## Permissions
+
+A mod's tool calls go through the same permission check as the model's. In
+auto mode that check is a server-side classifier, and it refuses a call that
+no model request asked for. To work there, the mod has a `tool.check` hook
+that approves its own browser pane calls, and only those: the tool names are
+fixed, the call must come from this plugin, and the URL and tab must be the
+ones the current `/isl` run produced. Calls the model makes to the same tools
+are left to the engine's own decision.
 
 ## Files
 
 - `.claude-plugin/plugin.json`: the plugin manifest
 - `hooks/hooks.json`: points at the hooks module
-- `hooks/register.js`: registers `/isl` and handles it
+- `hooks/register.js`: registers `/isl`, handles it, and holds the
+  `tool.check` hook
 - `tests/isl.test.ts`: tests that run without a session
-
-## Load it in the Desktop app
-
-The Desktop app takes no `--plugin-dir` flag. Add this folder to the plugin
-directories in `~/.claude/settings.json`, then start a new session:
-
-```json
-{
-  "env": {
-    "CLAUDE_CODE_PLUGIN_DIRS": "/Users/jacobo.bouzas.external/code/claude-sapling-mod"
-  }
-}
-```
 
 ## Validate and test
 
-The Desktop app bundles its own Claude Code. Use that binary when the one on
-`PATH` is older than 2.1.287:
+`claude plugin validate` and `claude plugin test` need Claude Code 2.1.287 or
+later. If the `claude` on your `PATH` is older, use the binary the Desktop app
+bundles. On macOS it lives under
+`~/Library/Application Support/Claude/claude-code/<version>/<build>/claude.app/Contents/MacOS/claude`:
 
 ```sh
-B="$HOME/Library/Application Support/Claude/claude-code/2.1.293/8433d0d9cd0d/claude.app/Contents/MacOS/claude"
+B="$(ls -d "$HOME/Library/Application Support/Claude/claude-code"/*/*/claude.app/Contents/MacOS/claude | sort -V | tail -1)"
 "$B" plugin validate .
 "$B" plugin test .
 ```
