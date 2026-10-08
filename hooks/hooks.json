@@ -1,0 +1,4 @@
+{
+  "description": "The sapling-web hooks module",
+  "modules": ["./register.js"]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "sapling-web",
+  "version": "0.1.0",
+  "description": "Adds /isl, which opens Sapling Web (ISL) for the session's folder in the Desktop app's browser pane",
+  "author": { "name": "Jacobo Bouzas" }
+}
