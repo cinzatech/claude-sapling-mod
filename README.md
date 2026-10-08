@@ -29,9 +29,24 @@ terminal view.
 
 ## Install
 
-The Desktop app takes no `--plugin-dir` flag. Add the folder that holds this
-repository to the plugin directories in `~/.claude/settings.json`, then start
-a new session, or run `/reload-plugins` in an open one:
+In Claude Desktop, open Settings, then Plugins, then Discover, and install
+`sapling-web`. Start a new session, or run `/reload-plugins` in an open one,
+and `/isl` is available.
+
+## Development
+
+### Files
+
+- `.claude-plugin/plugin.json`: the plugin manifest
+- `hooks/hooks.json`: points at the hooks module
+- `hooks/register.js`: registers `/isl` and handles it
+- `tests/isl.test.ts`: tests that run without a session
+
+### Load a working copy
+
+The Desktop app takes no `--plugin-dir` flag. Add the folder that holds your
+clone to the plugin directories in `~/.claude/settings.json`, then start a new
+session. After you change a file, run `/reload-plugins` in the session:
 
 ```json
 {
@@ -41,25 +56,10 @@ a new session, or run `/reload-plugins` in an open one:
 }
 ```
 
-## Permissions
+Remove the entry again before you install the plugin from Discover, or the
+two copies load side by side.
 
-A mod's tool calls go through the same permission check as the model's. In
-auto mode that check is a server-side classifier, and it refuses a call that
-no model request asked for. To work there, the mod has a `tool.check` hook
-that approves its own browser pane calls, and only those: the tool names are
-fixed, the call must come from this plugin, and the URL and tab must be the
-ones the current `/isl` run produced. Calls the model makes to the same tools
-are left to the engine's own decision.
-
-## Files
-
-- `.claude-plugin/plugin.json`: the plugin manifest
-- `hooks/hooks.json`: points at the hooks module
-- `hooks/register.js`: registers `/isl`, handles it, and holds the
-  `tool.check` hook
-- `tests/isl.test.ts`: tests that run without a session
-
-## Validate and test
+### Validate and test
 
 `claude plugin validate` and `claude plugin test` need Claude Code 2.1.287 or
 later. If the `claude` on your `PATH` is older, use the binary the Desktop app
